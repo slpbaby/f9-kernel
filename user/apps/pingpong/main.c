@@ -7,35 +7,61 @@
 #include <user_runtime.h>
 #include <l4/ipc.h>
 #include <l4/utcb.h>
+#include <l4io.h>
 
 #define STACK_SIZE 256
 
-enum { PING_THREAD, PONG_THREAD };
+enum { PING_THREAD, PONG_THREAD, COUNT_THREAD };
 
-static L4_ThreadId_t threads[2] __USER_DATA;
+static L4_ThreadId_t threads[3] __USER_DATA;
 
 static L4_Word_t last_thread __USER_DATA;
 static L4_Word_t free_mem __USER_DATA;
 
+static uint32_t counting __USER_DATA;
+
+#define TEST_SIZE 15
+#define TEST_NUM 1000
+
 void __USER_TEXT ping_thread(void)
 {
 	L4_Msg_t msg;
-
+	uint32_t i;
+	L4_Word_t word[TEST_SIZE];
+	for (i = 0; i < TEST_SIZE; i++)
+		word[i] = i;
 	L4_MsgClear(&msg);
+	for (i = 0; i < TEST_SIZE; i++)
+		L4_MsgAppendWord(&msg, word[i]);
 	L4_MsgLoad(&msg);
-
-	while (1)
+	
+	printf("Start: counting = %d\n", counting);
+	for (i = 0; i < TEST_NUM; i++)
 		L4_Send(threads[PONG_THREAD]);
+	while (1)
+		L4_Sleep(L4_Never);
 }
 
 void __USER_TEXT pong_thread(void)
 {
 	L4_MsgTag_t msgtag;
 	L4_Msg_t msg;
-
-	while (1) {
+	uint32_t i;
+	for (i = 0; i < TEST_NUM; i++) {
+	//while (1) {
 		msgtag = L4_Receive(threads[PING_THREAD]);
 		L4_MsgStore(msgtag, &msg);
+	}
+	printf("End: counting = %d\n", counting);
+
+	while (1)
+		L4_Sleep(L4_Never);
+}
+
+void __USER_TEXT count_thread(void)
+{
+	while (1) {
+		counting++;
 	}
 }
 
@@ -71,7 +97,8 @@ static L4_ThreadId_t __USER_TEXT create_thread(user_struct *user, void (*func)(v
 static void __USER_TEXT main(user_struct *user)
 {
 	free_mem = user->fpages[0].base;
-
+	counting = 0;
+	threads[COUNT_THREAD] = create_thread(user, count_thread);
 	threads[PING_THREAD] = create_thread(user, ping_thread);
 	threads[PONG_THREAD] = create_thread(user, pong_thread);
 }
@@ -80,5 +107,5 @@ DECLARE_USER(
 	0,
 	pingpong,
 	main,
-	DECLARE_FPAGE(0x0, 2 * UTCB_SIZE + 2 * STACK_SIZE)
+	DECLARE_FPAGE(0x0, 3 * UTCB_SIZE + 3 * STACK_SIZE)
 );
