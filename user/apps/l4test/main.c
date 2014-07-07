@@ -19,6 +19,9 @@
 #include "l4test.h"
 #include "assert.h"
 
+/* libposix */
+#include <libposix/libposix.h>
+
 #define STACK_SIZE 256
 
 /* where to start allocating RAM */
@@ -177,6 +180,7 @@ __USER_TEXT void all_tests(void)
 
 static void main(user_struct *user)
 {
+	fork();
 	printf("\nL4/Pistachio test suite starts\n");
 	free_page = (void *) user->fpages[0].base;
 	all_tests();
