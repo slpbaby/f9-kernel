@@ -4,6 +4,8 @@
 
 CONFIG := .config
 
+QEMU_DIR ?= ../qemu-konyavic/
+
 ifneq (,$(wildcard $(CONFIG)))
 include $(CONFIG)
 else
