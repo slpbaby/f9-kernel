@@ -182,7 +182,7 @@ tcb_t *thread_init(l4_thread_t globalid, utcb_t *utcb)
 	thr->utcb = utcb;
 	thr->state = T_INACTIVE;
 
-	dbg_printf(DL_THREAD, "T: New thread: %t @[%p] \n", globalid, thr);
+	dbg_printf(DL_KDB, "T: New thread: %t @[%p] \n", globalid, thr);
 
 	return thr;
 }

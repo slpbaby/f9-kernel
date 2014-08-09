@@ -4,4 +4,3 @@
 
 user-apps-dirs = \
 	posixtest \
-	pingpong \
