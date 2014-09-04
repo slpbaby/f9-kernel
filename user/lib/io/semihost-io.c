@@ -76,10 +76,15 @@ int __USER_TEXT semihost_puts(char *log)
 {
 	char file[6] = "mylog";
 	int handle;
-	handle = semihost_open(file, 6);
+	handle = semihost_open(file, 9);
 	if (handle == -1)
 		return -1;
 	semihost_write(handle, log);
 	semihost_close(handle);
 	return 0;
+}
+
+void __USER_TEXT qemu_exit(void)
+{
+	semihost_call(SYS_EXIT, (void*)0);
 }

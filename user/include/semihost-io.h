@@ -7,6 +7,7 @@
 #ifndef __SEMIHOST_IO_H__
 #define __SEMIHOST_IO_H__
 
-int __USER_TEXT semihost_puts(char *log);
+int semihost_puts(char *log);
+void qemu_exit(void);
 
 #endif
