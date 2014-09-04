@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 #include <platform/link.h>
-#include "string.h"
 
 enum SEMIHOST_SYSCALL {
 	SYS_OPEN = 0x01,
@@ -37,7 +36,15 @@ typedef union param_t {
 	char *entry_chr;
 } param;
 
-//extern int strlen( const char *src );
+static int __USER_TEXT
+strlen(const char *str)
+{
+	int len = 0;
+	while (*str != '\0')
+		str++, len++;
+
+	return len;
+}
 
 int __USER_TEXT semihost_call(enum SEMIHOST_SYSCALL action, void *param)
 {
