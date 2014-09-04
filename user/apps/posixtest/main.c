@@ -6,7 +6,7 @@
 
 /* posix layer */
 #include <libposix/pthread.h>
-
+#include <semihost-io.h>
 #define STACK_SIZE 256
 
 __USER_DATA pthread_mutex_t mutex;
@@ -55,10 +55,19 @@ static __USER_TEXT void main(user_struct *user)
 {
 	printf("\nPosix Layer test starts\n");
 	mutex = 0;
-	pthread_create(NULL, NULL, child_thread1, NULL);
 
-	while(1)
-		L4_Sleep(L4_Never);
+	semihost_puts("Posix Layer Test starts\n");
+	semihost_puts("Pthread create : ");
+
+	if (pthread_create(NULL, NULL, child_thread1, NULL) == 0)
+		semihost_puts("Success\n");
+	else
+		semihost_puts("Failed\n");
+
+
+	L4_Sleep(L4_TimePeriod(1000));
+
+	qemu_exit();
 
 	return;
 }
