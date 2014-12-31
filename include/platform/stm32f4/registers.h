@@ -145,14 +145,14 @@
 #define I2C_CCR(port)                   (volatile uint32_t *) (I2C_BASE(port) + 0x1C)           /* I2C clock control register */
 #define I2C_TRISE(port)                 (volatile uint32_t *) (I2C_BASE(port) + 0x20)           /* I2C TRISE register */
 
-/* USART 1 */
-#define USART1_SR                       (volatile uint32_t *) (USART1_BASE + 0x00)              /* USART1 status register */
-#define USART1_DR                       (volatile uint32_t *) (USART1_BASE + 0x04)              /* USART1 data register */
-#define USART1_BRR                      (volatile uint32_t *) (USART1_BASE + 0x08)              /* USART1 baud rate register */
-#define USART1_CR1                      (volatile uint32_t *) (USART1_BASE + 0x0C)              /* USART1 control register 1 */
-#define USART1_CR2                      (volatile uint32_t *) (USART1_BASE + 0x10)              /* USART1 control register 2 */
-#define USART1_CR3                      (volatile uint32_t *) (USART1_BASE + 0x14)              /* USART1 control register 3 */
-#define USART1_GTPR                     (volatile uint32_t *) (USART1_BASE + 0x18)              /* USART1 gaurd time and prescale register */
+/* USART */
+#define USART_SR(usartx)                (volatile uint32_t *) (usartx + 0x00)                   /* USART status register */
+#define USART_DR(usartx)                (volatile uint32_t *) (usartx + 0x04)                   /* USART data register */
+#define USART_BRR(usartx)               (volatile uint32_t *) (usartx + 0x08)                   /* USART baud rate register */
+#define USART_CR1(usartx)               (volatile uint32_t *) (usartx + 0x0C)                   /* USART control register 1 */
+#define USART_CR2(usartx)               (volatile uint32_t *) (usartx + 0x10)                   /* USART control register 2 */
+#define USART_CR3(usartx)               (volatile uint32_t *) (usartx + 0x14)                   /* USART control register 3 */
+#define USART_GTPR(usartx)              (volatile uint32_t *) (usartx + 0x18)                   /* USART gaurd time and prescale register */
 
 /* GPIO Port (GPIO) */
 #define GPIO_MODER(port)                (volatile uint32_t *) (GPIO_BASE(port) + 0x00)          /* Port mode register */
