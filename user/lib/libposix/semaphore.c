@@ -9,3 +9,23 @@
 #include <l4io.h>
 #include <platform/link.h>
 #include <libposix/semaphore.h>
+
+__USER_TEXT int sem_init(sem_t *sem, int pshared, unsigned int value)
+{
+
+}
+
+__USER_TEXT int sem_trywait(sem_t *sem)
+{
+
+}
+
+__USER_TEXT int sem_wait(sem_t *sem)
+{
+
+}
+
+__USER_TEXT int sem_post(sem_t *sem)
+{
+
+}
