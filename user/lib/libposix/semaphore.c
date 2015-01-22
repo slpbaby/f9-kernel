@@ -12,7 +12,13 @@
 
 __USER_TEXT int sem_init(sem_t *sem, int pshared, unsigned int value)
 {
+    if (sem == NULL)
+        return -1;
 
+    sem->refcount = 1;
+    sem->value = value;
+
+    return 0;
 }
 
 __USER_TEXT int sem_trywait(sem_t *sem)
