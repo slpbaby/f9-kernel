@@ -13,4 +13,9 @@ struct posix_sem_t {
     uint16_t value;
 };
 typedef struct posix_sem_t sem_t;
+
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+int sem_trywait(sem_t *sem);
+int sem_wait(sem_t *sem);
+int sem_post(sem_t *sem);
 #endif
