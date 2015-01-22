@@ -59,5 +59,17 @@ __USER_TEXT int sem_wait(sem_t *sem)
 
 __USER_TEXT int sem_post(sem_t *sem)
 {
+    if (sem == NULL)
+        return -1;
 
+    __asm__ __volatile__(
+        "mov r1, #1\n"
+        "mov r2, %[value]\n"
+        "ldrex r0, [r2]\n"
+        "strex r0, r1, [r2]\n"
+        :
+        : [value] "r"(&sem->value)
+        : "r0", "r1", "r2");
+
+    return 0;
 }
