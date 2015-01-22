@@ -4,4 +4,5 @@
 
 user-lib-libposix-y = \
 	fork.o \
-	pthread.o
+	pthread.o \
+	semaphore.o
