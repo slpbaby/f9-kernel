@@ -26,11 +26,6 @@ __USER_TEXT int pthread_detach(pthread_t thread)
 	return 0;	
 }
 
-__USER_TEXT void pthread_exit(void *value_ptr) 
-{
-	return;
-}
-
 __USER_TEXT int pthread_join(pthread_t thread, void **value_ptr)
 {
 	return 0;
