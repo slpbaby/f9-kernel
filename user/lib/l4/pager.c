@@ -13,9 +13,15 @@
 
 typedef void *thr_handler_t(void *);
 
+struct join_thread {
+	L4_ThreadId_t join_id;
+	struct join_thread *next;
+};
+
 struct thread_node {
 	L4_Word_t base;			/* stack + utcb */
 	L4_ThreadId_t tid;
+	struct join_thread *joined;
 };
 
 static inline void use_thread_node(struct thread_node *node)
@@ -87,6 +93,7 @@ static struct thread_pool *init_thread_pool(L4_Word_t res_base,
 	for (i = 1 ; i < node_num ; i++) {
 		nodes[i].base = res_base;
 		nodes[i].tid.raw = 0;
+		nodes[i].joined = NULL;
 		res_base += (UTCB_SIZE + STACK_SIZE);
 	}
 
@@ -149,14 +156,9 @@ __USER_TEXT
 void thread_container(kip_t *kip_ptr, utcb_t *utcb_ptr,
                       L4_Word_t entry, L4_Word_t entry_arg)
 {
-	L4_Msg_t msg;
-	((thr_handler_t *)entry)((void *)entry_arg);
-
-	L4_MsgClear(&msg);
-	L4_Set_MsgLabel(&msg, PAGER_REQUEST_LABEL);
-	L4_MsgAppendWord(&msg, THREAD_FREE);
-	L4_MsgLoad(&msg);
-	L4_Call(L4_Pager());
+	void *ret_val;
+	ret_val = (void *)((thr_handler_t *)entry)((void *)entry_arg);
+	pager_stop_thread(ret_val);
 }
 
 __USER_TEXT
@@ -274,6 +276,47 @@ L4_Word_t pager_start_thread(L4_ThreadId_t tid, void * (*thr_routine)(void *),
 }
 
 __USER_TEXT
+void pager_stop_thread(void *ret_val)
+{
+	L4_Msg_t msg;
+	L4_MsgTag_t tag;
+	L4_Word_t ret;
+	struct join_thread *join;
+
+	/* request joined thread id */
+	L4_MsgClear(&msg);
+	L4_Set_Label(&msg.tag, PAGER_REQUEST_LABEL);
+	L4_MsgAppendWord(&msg, THREAD_STOP);
+	L4_MsgLoad(&msg);
+	tag = L4_Call(L4_Pager());
+
+	/* Send return value to joined thread */
+	if (L4_Label(tag) == PAGER_REPLY_LABEL) {
+		L4_StoreMR(1, &ret);
+		join = (struct join_thread *)ret;
+
+		L4_MsgClear(&msg);
+		L4_MsgAppendWord(&msg, (L4_Word_t)ret_val);
+		L4_MsgLoad(&msg);
+		while (join != NULL) {
+			L4_Send(join->join_id);
+			/* TODO: free struct join_thread */
+			join = join->next;
+		}
+	}
+
+	/* call THREAD_FREE to pager */
+	L4_MsgClear(&msg);
+	L4_Set_MsgLabel(&msg, PAGER_REQUEST_LABEL);
+	L4_MsgAppendWord(&msg, THREAD_FREE);
+	L4_MsgLoad(&msg);
+	L4_Call(L4_Pager());
+
+	while (1)
+		;
+}
+
+__USER_TEXT
 void pager_thread(user_struct *user,
                   void * (*entry_main)(void *))
 {
@@ -354,6 +397,22 @@ void pager_thread(user_struct *user,
 			release_thread(pool, request_tid);
 			break;
 		case THREAD_WAIT:
+			break;
+		case THREAD_STOP: {
+				struct thread_node *node;
+
+				L4_MsgClear(&msg);
+
+				node = find_thread_node(pool, request_tid);
+				if (node == NULL) {
+					printf("failed to find request thread\n");
+				} else {
+					L4_Set_Label(&msg.tag, PAGER_REPLY_LABEL);
+					L4_MsgAppendWord(&msg, (L4_Word_t)node->joined);
+				}
+				L4_MsgLoad(&msg);
+				L4_Send(request_tid);
+			}
 			break;
 		}
 	}

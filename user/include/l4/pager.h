@@ -37,6 +37,8 @@ enum {
     THREAD_CREATE_START,
     THREAD_FREE,
     THREAD_WAIT,
+    THREAD_STOP,
+    THREAD_JOIN,
 };
 
 __USER_TEXT
@@ -45,6 +47,9 @@ L4_ThreadId_t pager_create_thread(void);
 __USER_TEXT
 L4_Word_t pager_start_thread(L4_ThreadId_t tid, void * (*thr_routine)(void *),
                              void *arg);
+
+__USER_TEXT
+void pager_stop_thread(void *ret_val);
 
 __USER_TEXT
 void pager_thread(user_struct *user,
