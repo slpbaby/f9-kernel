@@ -28,8 +28,29 @@ __USER_TEXT int pthread_detach(pthread_t thread)
 
 __USER_TEXT void pthread_exit(void *value_ptr)
 {
+	L4_Msg_t msg;
+	struct join_thread *join;
+
+	/*
+	  Get joined thread id
+	  and send value_ptr to them
+	*/
+	join = pager_get_joined();
+
+	L4_MsgClear(&msg);
+	L4_MsgAppendWord(&msg, (L4_Word_t)value_ptr);
+	L4_MsgLoad(&msg);
+	while (join != NULL) {
+		L4_Send(join->join_id);
+		/* TODO: free struct join_thread */
+		join = join->next;
+	}
+
     pager_stop_thread(value_ptr);
-    return;
+
+	/* Thread should not reach */
+	while (1)
+		;
 }
 
 __USER_TEXT int pthread_join(pthread_t thread, void **value_ptr)

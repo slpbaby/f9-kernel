@@ -13,11 +13,6 @@
 
 typedef void *thr_handler_t(void *);
 
-struct join_thread {
-	L4_ThreadId_t join_id;
-	struct join_thread *next;
-};
-
 struct thread_node {
 	L4_Word_t base;			/* stack + utcb */
 	L4_ThreadId_t tid;
@@ -276,12 +271,14 @@ L4_Word_t pager_start_thread(L4_ThreadId_t tid, void * (*thr_routine)(void *),
 }
 
 __USER_TEXT
-void pager_stop_thread(void *ret_val)
+struct join_thread *pager_get_joined(void)
 {
 	L4_Msg_t msg;
 	L4_MsgTag_t tag;
 	L4_Word_t ret;
 	struct join_thread *join;
+
+	join = NULL;
 
 	/* request joined thread id */
 	L4_MsgClear(&msg);
@@ -290,20 +287,18 @@ void pager_stop_thread(void *ret_val)
 	L4_MsgLoad(&msg);
 	tag = L4_Call(L4_Pager());
 
-	/* Send return value to joined thread */
 	if (L4_Label(tag) == PAGER_REPLY_LABEL) {
 		L4_StoreMR(1, &ret);
 		join = (struct join_thread *)ret;
-
-		L4_MsgClear(&msg);
-		L4_MsgAppendWord(&msg, (L4_Word_t)ret_val);
-		L4_MsgLoad(&msg);
-		while (join != NULL) {
-			L4_Send(join->join_id);
-			/* TODO: free struct join_thread */
-			join = join->next;
-		}
 	}
+
+	return join;
+}
+
+__USER_TEXT
+void pager_stop_thread(void *ret_val)
+{
+	L4_Msg_t msg;
 
 	/* call THREAD_FREE to pager */
 	L4_MsgClear(&msg);
@@ -311,9 +306,6 @@ void pager_stop_thread(void *ret_val)
 	L4_MsgAppendWord(&msg, THREAD_FREE);
 	L4_MsgLoad(&msg);
 	L4_Call(L4_Pager());
-
-	while (1)
-		;
 }
 
 __USER_TEXT
