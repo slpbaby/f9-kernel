@@ -13,9 +13,17 @@
 
 typedef void *thr_handler_t(void *);
 
+typedef enum {
+	T_READY,
+	T_RUNNING,
+	T_WAITING,
+	T_STOP
+} thread_state_t;
+
 struct thread_node {
 	L4_Word_t base;			/* stack + utcb */
 	L4_ThreadId_t tid;
+	thread_state_t state;
 };
 
 static inline void use_thread_node(struct thread_node *node)
@@ -196,6 +204,7 @@ static L4_ThreadId_t __thread_create(struct thread_pool *pool)
 	node = &pool->all_nodes[thr_idx];
 	node->tid = child;
 	use_thread_node(node);
+	node->state = T_READY;
 
 	myself = L4_MyGlobalId();
 	free_mem = (L4_Word_t)THREAD_NODE_BASE(node);
@@ -218,6 +227,7 @@ static L4_Word_t __thread_start(struct thread_pool *pool, L4_ThreadId_t tid,
 	if (node == NULL)
 		return (L4_Word_t) - 1;
 
+	node->state = T_RUNNING;
 	stack = (L4_Word_t)THREAD_NODE_BASE(node) + UTCB_SIZE + STACK_SIZE;
 	start_thread(tid, entry, entry_arg, stack, STACK_SIZE);
 
