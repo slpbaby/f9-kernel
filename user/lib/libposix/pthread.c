@@ -47,6 +47,31 @@ __USER_TEXT int pthread_detach(pthread_t thread)
 
 __USER_TEXT void pthread_exit(void *value_ptr) 
 {
+	L4_Msg_t msg;
+	L4_MsgTag_t tag;
+	L4_ThreadId_t target;
+
+	pager_stop_thread();
+
+	while (true) {
+		tag = L4_Wait_Timeout(L4_TimePeriod(100 * 1000), &target);
+		if (!L4_IpcSucceeded(tag)) {
+			break;
+		}
+		if (L4_Label(tag) != PTHREAD_JOIN_LABEL) {
+			printf("Invalid label = %p\n", L4_Label(tag));
+			break;
+		}
+
+		L4_MsgClear(&msg);
+		L4_Set_Label(&msg.tag, PTHREAD_RETURN_LABEL);
+		L4_MsgAppendWord(&msg, (L4_Word_t)value_ptr);
+		L4_MsgLoad(&msg);
+		L4_Send(target);
+	}
+
+	pager_release_thread();
+
 	return;
 }
 
