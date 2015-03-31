@@ -13,6 +13,9 @@
 
 #define MAX_PTHREAD 32
 
+#define PTHREAD_JOIN_LABEL 0xf02
+#define PTHREAD_RETURN_LABEL 0xf03
+
 int pthread_count = 0;
 static pthread_t *pthread_tcb[MAX_PTHREAD] __USER_DATA;
 
@@ -49,6 +52,44 @@ __USER_TEXT void pthread_exit(void *value_ptr)
 
 __USER_TEXT int pthread_join(pthread_t thread, void **value_ptr)
 {
+	L4_Msg_t msg;
+	L4_MsgTag_t tag;
+	L4_Word_t req;
+	unsigned int *ret_val;
+	unsigned int *ptr;
+
+	if (thread.joinable != 1) {
+		/* FIXME: return EINVAL value */
+		printf("pthread not joinable\n");
+		return 1;
+	}
+	if (pager_hold_thread(thread.ptid) == -1) {
+		/* FIXME: return ESRCH value */
+		printf("thread hold failed\n");
+		return 1;
+	}
+
+	L4_MsgClear(&msg);
+	L4_Set_Label(&msg.tag, PTHREAD_JOIN_LABEL);
+	L4_MsgLoad(&msg);
+
+	L4_Send(thread.ptid);
+
+	tag = L4_Receive(thread.ptid);
+	if (L4_Label(tag) != PTHREAD_RETURN_LABEL) {
+		printf("Invalid label = %p\n", L4_Label(tag));
+		return 1;
+	}
+
+	L4_MsgStore(tag, &msg);
+	req = L4_MsgWord(&msg, 0);
+
+	if (value_ptr != NULL) {
+		ret_val = (unsigned int *)req;
+		ptr = *value_ptr;
+		*ptr = *ret_val;
+	}
+
 	return 0;
 }
 
