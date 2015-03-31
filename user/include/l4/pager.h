@@ -51,6 +51,9 @@ __USER_TEXT
 L4_Word_t pager_hold_thread(L4_ThreadId_t tid);
 
 __USER_TEXT
+L4_Word_t pager_stop_thread(void);
+
+__USER_TEXT
 void pager_thread(user_struct *user,
                   void * (*entry_main)(void *user));
 #endif
