@@ -157,14 +157,9 @@ __USER_TEXT
 void thread_container(kip_t *kip_ptr, utcb_t *utcb_ptr,
                       L4_Word_t entry, L4_Word_t entry_arg)
 {
-	L4_Msg_t msg;
 	((thr_handler_t *)entry)((void *)entry_arg);
 
-	L4_MsgClear(&msg);
-	L4_Set_MsgLabel(&msg, PAGER_REQUEST_LABEL);
-	L4_MsgAppendWord(&msg, THREAD_FREE);
-	L4_MsgLoad(&msg);
-	L4_Call(L4_Pager());
+	pager_release_thread();
 }
 
 __USER_TEXT
@@ -232,6 +227,18 @@ static L4_Word_t __thread_start(struct thread_pool *pool, L4_ThreadId_t tid,
 	start_thread(tid, entry, entry_arg, stack, STACK_SIZE);
 
 	return 0;
+}
+
+__USER_TEXT
+void pager_release_thread(void)
+{
+	L4_Msg_t msg;
+
+	L4_MsgClear(&msg);
+	L4_Set_MsgLabel(&msg, PAGER_REQUEST_LABEL);
+	L4_MsgAppendWord(&msg, THREAD_FREE);
+	L4_MsgLoad(&msg);
+	L4_Call(L4_Pager());
 }
 
 __USER_TEXT
