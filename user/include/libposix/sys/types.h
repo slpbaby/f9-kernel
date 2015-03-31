@@ -18,7 +18,11 @@ typedef struct posix_sem_t sem_t;
 /* FIXME: Define proper type for pthread type */
 typedef uint32_t pthread_mutex_t;
 typedef uint32_t pthread_mutexattr_t;
-typedef uint32_t pthread_t;
+typedef struct {
+	L4_ThreadId_t ptid;
+	int joinable;
+	sem_t pthread_struct_sem;
+} pthread_t;
 typedef uint32_t pthread_attr_t;
 
 #endif
