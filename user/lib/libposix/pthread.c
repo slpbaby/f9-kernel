@@ -4,17 +4,33 @@
  */
 
 #include <libposix/pthread.h>
+#include <libposix/semaphore.h>
 #include <l4/ipc.h>
 #include <l4/utcb.h>
 #include <l4/pager.h>
 #include <l4io.h>
 #include <platform/link.h>
 
-int __USER_TEXT pthread_create(pthread_t *restrict thread,
+#define MAX_PTHREAD 32
+
+int pthread_count = 0;
+static pthread_t *pthread_tcb[MAX_PTHREAD] __USER_DATA;
+
+int __USER_TEXT pthread_create(pthread_t *thread,
                                const pthread_attr_t *restrict attr,
                                void *(*start_routine)(void*), void *restrict arg)
 {
 	L4_ThreadId_t tid = pager_create_thread();
+
+	/*
+	   FIXME:
+	   joinable should be set according to attr
+	*/
+	pthread_tcb[pthread_count] = thread;
+	pthread_tcb[pthread_count]->joinable = 1;
+	pthread_tcb[pthread_count]->ptid = tid;
+	sem_init(&(pthread_tcb[pthread_count]->pthread_struct_sem), 0, 0);
+	pthread_count++;
 
 	pager_start_thread(tid, start_routine, NULL);
 
