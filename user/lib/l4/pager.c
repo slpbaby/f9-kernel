@@ -235,6 +235,31 @@ static L4_Word_t __thread_start(struct thread_pool *pool, L4_ThreadId_t tid,
 }
 
 __USER_TEXT
+L4_Word_t pager_hold_thread(L4_ThreadId_t tid)
+{
+	L4_Word_t ret;
+	L4_Msg_t msg;
+	L4_MsgTag_t tag;
+
+	L4_MsgClear(&msg);
+	L4_Set_Label(&msg.tag, PAGER_REQUEST_LABEL);
+	L4_MsgAppendWord(&msg, THREAD_WAIT);
+	L4_MsgAppendWord(&msg, tid.raw);
+
+	L4_MsgLoad(&msg);
+	tag = L4_Call(L4_Pager());
+
+	if (L4_Label(tag) == PAGER_REPLY_LABEL) {
+		L4_StoreMR(1, &ret);
+	} else {
+		ret = -1;
+	}
+
+	return ret;
+
+}
+
+__USER_TEXT
 L4_ThreadId_t pager_create_thread(void)
 {
 	L4_ThreadId_t tid;
@@ -363,7 +388,31 @@ void pager_thread(user_struct *user,
 		case THREAD_FREE:
 			release_thread(pool, request_tid);
 			break;
-		case THREAD_WAIT:
+		case THREAD_WAIT: {
+				L4_ThreadId_t tid;
+				struct thread_node *node;
+
+				tid.raw = L4_MsgWord(&msg, 1);
+
+				L4_MsgClear(&msg);
+				L4_Set_Label(&msg.tag, PAGER_REPLY_LABEL);
+
+				node = find_thread_node(pool, tid);
+				if (node == NULL)
+					L4_MsgAppendWord(&msg, (L4_Word_t) -1);
+				else {
+					node = find_thread_node(pool, request_tid);
+
+					if (node == NULL)
+						L4_MsgAppendWord(&msg, (L4_Word_t) -1);
+					else {
+						node->state = T_WAITING;
+						L4_MsgAppendWord(&msg, (L4_Word_t) 1);
+					}
+				}
+				L4_MsgLoad(&msg);
+				L4_Send(request_tid);
+			}
 			break;
 		}
 	}
