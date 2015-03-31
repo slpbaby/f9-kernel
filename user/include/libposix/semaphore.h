@@ -8,12 +8,6 @@
 
 #include <libposix/sys/types.h>
 
-struct posix_sem_t {
-    uint16_t refcount;
-    uint16_t value;
-};
-typedef struct posix_sem_t sem_t;
-
 int sem_init(sem_t *sem, int pshared, unsigned int value);
 int sem_trywait(sem_t *sem);
 int sem_wait(sem_t *sem);
