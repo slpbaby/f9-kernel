@@ -30,4 +30,7 @@ typedef uint32_t size_t;
 #define ALIGNED(size, align) \
 	(size / align) + ((size & (align - 1)) != 0)
 
+#define likely(x)	__builtin_expect((x), (true))
+#define unlikely(x)	__builtin_expect((x), (false))
+
 #endif /* TYPES_H_ */

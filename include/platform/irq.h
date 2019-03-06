@@ -9,8 +9,11 @@
 #include <softirq.h>
 #include <thread.h>
 #include <sched.h>
+#include <types.h>
 #include <platform/link.h>
 #include <platform/cortex_m.h>
+
+static bool irq_schedule_enabled = false;
 
 void irq_init(void);
 
@@ -39,6 +42,11 @@ static inline int irq_number(void)
 		: "=r" (irqno) : : "r0");
 
 	return irqno;
+}
+
+static inline void enable_irq_schedule(void)
+{
+	irq_schedule_enabled = true;
 }
 
 /*
@@ -137,9 +145,11 @@ static inline int irq_number(void)
 #define schedule_in_irq()						\
 	{								\
 		register tcb_t *sel;					\
-		sel = schedule_select();				\
-		if (sel != current)					\
-			context_switch(current, sel);			\
+		if (likely(irq_schedule_enabled)) {			\
+			sel = schedule_select();			\
+			if (sel != current)				\
+				context_switch(current, sel);		\
+		}							\
 	}
 
 #define request_schedule()						\

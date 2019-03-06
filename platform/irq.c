@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <init_hook.h>
 #include <platform/irq.h>
 #include "board.h"
 
@@ -35,3 +36,9 @@ void pendsv_handler(void)
 	irq_return();
 }
 #endif
+
+static void irq_sched_init(void)
+{
+	enable_irq_schedule();
+}
+INIT_HOOK(irq_sched_init, INIT_LEVEL_LAST);
